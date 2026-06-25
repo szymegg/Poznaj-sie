@@ -1,5 +1,5 @@
 // Łapiemy elementy z HTML
-const socket = io();
+const socket = io('https://poznaj-sie.onrender.com');
 const startBtn = document.getElementById('start-btn');
 const welcomeScreen = document.getElementById('welcome-screen');
 const chatScreen = document.getElementById('chat-screen');
