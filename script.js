@@ -58,6 +58,7 @@ function sendMessage() {
     const text = messageInput.value.trim();
     if(text !== "") {
         messagesBox.innerHTML += `<p><strong>Ty:</strong> ${text}</p>`;
+        socket.emit('send-message', text);
         messageInput.value = ""; 
         startInactivityTimer();
     }
@@ -257,5 +258,10 @@ socket.on('partner-found', () => {
     messageInput.placeholder = "Napisz wiadomość...";
     messageInput.focus();
 
+    startInactivityTimer();
+});
+socket.on('receive-message', (text) => {
+    messagesBox.innerHTML += `<p><strong>Obcy:</strong> ${text}</p>`;
+    // tutaj też możesz zresetować timer nieaktywności, jeśli chcesz
     startInactivityTimer();
 });
