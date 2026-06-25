@@ -1,4 +1,5 @@
 // Łapiemy elementy z HTML
+const socket = io();
 const startBtn = document.getElementById('start-btn');
 const welcomeScreen = document.getElementById('welcome-screen');
 const chatScreen = document.getElementById('chat-screen');
