@@ -1,0 +1,340 @@
+/* Reset podstawowych marginesów i ustawienie ładnej czcionki */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* CIEKAWE TŁO: Matowy, ciemny grafit z delikatnymi, ciepłymi poświatami w rogach */
+body {
+    background-color: #3b3c43;
+    background-image: 
+        radial-gradient(circle at 90% 10%, rgba(212, 175, 55, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 10% 80%, rgba(212, 175, 55, 0.06) 0%, transparent 35%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #333;
+}
+
+/* Panel główny (tabelka) - czysty, elegancki krem/kość słoniowa */
+.welcome-container {
+    text-align: center;
+    background: #fbf6ec;
+    padding: 35px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+    max-width: 420px;
+    width: 100%;
+}
+
+h1 {
+    color: #4a463f;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.subtitle {
+    color: #8c877e;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #5d5850;
+    text-align: left;
+    letter-spacing: 0.5px;
+}
+
+.selection-box {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Kontener na przyciski wyboru */
+.radio-group {
+    display: flex;
+    gap: 10px;
+}
+
+.option-button {
+    flex: 1;
+    cursor: pointer;
+}
+
+.option-button input {
+    display: none; /* Ukrywa standardową kropkę */
+}
+
+/* Wygląd opcji przed zaznaczeniem - jasne, czyste kafelki */
+.option-button span {
+    display: block;
+    padding: 12px 5px;
+    background: #ffffff;
+    border: 2px solid #ede7db;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #5d5850;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+/* Efekt po najechaniu myszką */
+.option-button:hover span {
+    background: #f4eee1;
+    border-color: #dcd4c4;
+}
+
+/* Wygląd po zaznaczeniu opcji - elegancka, złota ramka */
+.option-button input:checked + span {
+    background: #ffffff;
+    color: #4a463f;
+    border-color: #c59b27;
+    box-shadow: 0 0 0 1px #c59b27, 0 4px 10px rgba(197, 155, 39, 0.15);
+}
+
+/* Główny przycisk "Rozpocznij losowanie" - złoto-pomarańczowy gradient */
+.start-btn {
+    background: linear-gradient(135deg, #b0842b 0%, #d5684d 100%);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.25s ease;
+    box-shadow: 0 5px 15px rgba(213, 104, 77, 0.3);
+}
+
+/* Efekt po najechaniu na przycisk startu */
+.start-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 20px rgba(213, 104, 77, 0.45);
+    filter: brightness(1.05);
+}
+
+/* Klasa pomocnicza do ukrywania elementów */
+.id-hidden {
+    display: none !important;
+}
+
+/* Styl dla okna czatu */
+.chat-container {
+    width: 100%;
+    max-width: 600px;
+    background: #fbf6ec;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+    padding: 20px;
+}
+
+.chat-box {
+    display: flex;
+    flex-direction: column;
+    height: 400px;
+}
+
+.messages {
+    flex: 1;
+    background: #ffffff;
+    border: 2px solid #ede7db;
+    border-radius: 12px;
+    padding: 15px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.system-msg {
+    color: #b0842b;
+    font-style: italic;
+    text-align: center;
+    font-size: 14px;
+}
+
+.input-area {
+    display: flex;
+    gap: 10px;
+}
+
+#message-input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #ede7db;
+    border-radius: 25px;
+    outline: none;
+    font-size: 14px;
+}
+
+#send-btn {
+    background: linear-gradient(135deg, #b0842b 0%, #d5684d 100%);
+    color: white;
+    border: none;
+    padding: 0 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* === REGUŁY DLA OKIENKA MODALNEGO (WYŚRODKOWANIE I STYL) === */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-box {
+    background: #fbf6ec;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    max-width: 380px;
+    width: 90%;
+    border: 2px solid #ede7db;
+}
+
+.modal-box h3 {
+    text-align: center !important;
+    color: #d5684d;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.modal-box p {
+    color: #5d5850;
+    font-size: 15px;
+    margin-bottom: 25px;
+}
+
+.modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-btn {
+    padding: 14px;
+    border: none;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+
+.modal-btn.primary {
+    background: linear-gradient(135deg, #b0842b 0%, #d5684d 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(213, 104, 77, 0.2);
+}
+.modal-btn.primary:hover {
+    filter: brightness(1.1);
+}
+
+.modal-btn.danger {
+    background: #3b3c43;
+    color: #ede7db;
+    border: 2px solid #5d5850;
+}
+.modal-btn.danger:hover {
+    background: #4e5059;
+    color: white;
+}
+/* Układ czatu dzielony z grą */
+.chat-main-area {
+    display: flex;
+    gap: 15px;
+    flex: 1;
+    margin-bottom: 15px;
+    min-height: 0;
+}
+
+/* Przycisk gierki w pasku pisania */
+.game-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.game-btn:hover { background: #2563eb; }
+
+/* Plansza Kółko i Krzyżyk */
+.game-box {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 5px;
+    width: 200px;
+    background: #ede7db;
+    border-radius: 12px;
+    padding: 5px;
+}
+
+/* Pojedyncza kratka gry */
+.cell {
+    background: #ffffff;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: #4a463f;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.cell:hover {
+    background: #f4eee1;
+}
+
+/* Responsywność - na mniejszych ekranach gra wskoczy pod wiadomości */
+@media (max-width: 600px) {
+    .chat-main-area { flex-direction: column; }
+    .game-box { width: 100%; height: 150px; }
+}
+/* Styl dla stałego przycisku Rozłącz */
+.leave-btn {
+    background: #d5684d;
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 14px;
+}
+
+.leave-btn:hover {
+    background: #b8543b;
+}
+
+/* Zabezpieczenie: jeśli pole pisania jest zablokowane, przycisk rozłączenia też może lekko zblednąć */
+.leave-btn:disabled {
+    background: #a8a5a0;
+    cursor: not-allowed;
+}

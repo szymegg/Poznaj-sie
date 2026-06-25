@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poznaj się - Anonimowy Czat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="welcome-container" id="welcome-screen">
+        <h1>Poznaj się 👋</h1>
+        <p class="subtitle">Połącz się anonimowo z losowym rozmówcą</p>
+
+        <div class="selection-box">
+            <h3>Kim jesteś?</h3>
+            <div class="radio-group">
+                <label class="option-button">
+                    <input type="radio" name="my-gender" value="male">
+                    <span>Mężczyzną</span>
+                </label>
+                <label class="option-button">
+                    <input type="radio" name="my-gender" value="female">
+                    <span>Kobietą</span>
+                </label>
+            </div>
+
+            <h3>Kogo szukasz?</h3>
+            <div class="radio-group">
+                <label class="option-button">
+                    <input type="radio" name="search-gender" value="male">
+                    <span>Mężczyzny</span>
+                </label>
+                <label class="option-button">
+                    <input type="radio" name="search-gender" value="female">
+                    <span>Kobiety</span>
+                </label>
+                <label class="option-button">
+                    <input type="radio" name="search-gender" value="anyone" checked>
+                    <span>Kogokolwiek</span>
+                </label>
+            </div>
+
+            <button type="button" class="start-btn" id="start-btn">Rozpocznij losowanie</button>
+        </div>
+    </div>
+
+    <div class="chat-container id-hidden" id="chat-screen">
+        <div class="chat-box">
+            <div class="chat-main-area">
+                <div class="messages" id="messages-box">
+                    <p class="system-msg">Łączenie z rozmówcą...</p>
+                </div>
+                
+                <div class="game-box id-hidden" id="game-board">
+                    <div class="cell" data-index="0"></div>
+                    <div class="cell" data-index="1"></div>
+                    <div class="cell" data-index="2"></div>
+                    <div class="cell" data-index="3"></div>
+                    <div class="cell" data-index="4"></div>
+                    <div class="cell" data-index="5"></div>
+                    <div class="cell" data-index="6"></div>
+                    <div class="cell" data-index="7"></div>
+                    <div class="cell" data-index="8"></div>
+                </div>
+            </div>
+           <div class="input-area">
+                <input type="text" id="message-input" placeholder="Napisz wiadomość...">
+                <button id="send-btn">Wyślij</button>
+                <button id="game-toggle-btn" class="game-btn">🎮 Gra</button>
+                <button id="leave-btn" class="leave-btn">❌ Rozłącz</button>
+            </div>
+        </div>
+    </div>
+<div class="modal-overlay id-hidden" id="action-modal">
+        <div class="modal-box">
+            <h3>Brak aktywności!</h3>
+            <p>Co chcesz zrobić?</p>
+            <div class="modal-buttons">
+                <button id="auto-question-btn" class="modal-btn primary">Zadaj automatyczne pytanie</button>
+                <button id="leave-chat-btn" class="modal-btn danger">Opuść rozmowę</button>
+            </div>
+        </div>
+    </div>
+   <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
