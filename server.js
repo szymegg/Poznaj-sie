@@ -16,21 +16,28 @@ let waitingQueue = [];
 io.on('connection', (socket) => {
     console.log(`Nowy użytkownik połączył się: ${socket.id}`);
 
-    // Reakcja na kliknięcie "Rozpocznij losowanie"
-    socket.on('search-partner', (myGenderPreference) => {
-        // Zapisujemy preferencje tego użytkownika
-        socket.partnerPreference = myGenderPreference;
-        socket.partner = null;
+   socket.on('search-partner', () => {
+    socket.partner = null;
 
-        // Szukamy kogoś w kolejce, kto pasuje do naszych kryteriów i my pasujemy do jego
-        let matchIndex = waitingQueue.findIndex(user => {
-            // Czy ja akceptuję jego, a on akceptuje mnie?
-            const IAcceptHim = (myGenderPreference === 'anyone'); // uproszczone na start lub dokładne parowanie
-            const HeAcceptsMe = (user.partnerPreference === 'anyone');
-            
-            return IAcceptHim && HeAcceptsMe; // Na start najprostsze parowanie 'Kogokolwiek'
-        });
+    // 1. Sprawdzamy, czy w kolejce już ktoś czeka
+    if (waitingQueue.length > 0) {
+        // Wyciągamy pierwszą osobę z kolejki
+        let partnerSocket = waitingQueue.shift();
 
+        // Parujemy ich ze sobą
+        socket.partner = partnerSocket;
+        partnerSocket.partner = socket;
+
+        // Informujemy oba programy, że znaleziono parę!
+        socket.emit('partner-found');
+        partnerSocket.emit('partner-found');
+        
+        console.log(`Połączono parę: ${socket.id} oraz ${partnerSocket.id}`);
+    } else {
+        // 2. Jeśli kolejka jest pusta, sami do niej wskakujemy i czekamy
+        waitingQueue.push(socket);
+        console.log(`Użytkownik ${socket.id} czeka w kolejce.`);
+    }
         if (matchIndex !== -1) {
             // Znaleźliśmy parę! Wyciągamy tę osobę z kolejki
             let partnerSocket = waitingQueue.splice(matchIndex, 1)[0];
