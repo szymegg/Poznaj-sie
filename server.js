@@ -38,21 +38,6 @@ io.on('connection', (socket) => {
         waitingQueue.push(socket);
         console.log(`Użytkownik ${socket.id} czeka w kolejce.`);
     }
-        if (matchIndex !== -1) {
-            // Znaleźliśmy parę! Wyciągamy tę osobę z kolejki
-            let partnerSocket = waitingQueue.splice(matchIndex, 1)[0];
-
-            // Łączymy ich ze sobą w kodzie
-            socket.partner = partnerSocket;
-            partnerSocket.partner = socket;
-
-            // Wysyłamy sygnał do obu osób, że zostali połączeni!
-            socket.emit('matched');
-            partnerSocket.emit('matched');
-        } else {
-            // Brak wolnych ludzi pasujących – dodajemy użytkownika do kolejki oczekujących
-            waitingQueue.push(socket);
-        }
     });
 
     // Przesyłanie wiadomości tekstowej
