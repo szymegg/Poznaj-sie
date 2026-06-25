@@ -34,26 +34,13 @@ function startInactivityTimer() {
 // 1. FUNKCJA STARTU CZATU (wywoływana na początku i przy szukaniu nowego rozmówcy)
 function startNewChat() {
     messagesBox.innerHTML = `<p class="system-msg">Łączenie z rozmówcą...</p>`;
-    
+    socket.emit('search-partner');
+
     // ZABLOKOWANIE pisania i przycisków na starcie
     messageInput.disabled = true;
     sendBtn.disabled = true;
-    leaveBtn.disabled = true; 
+    leaveBtn.disabled = true;
     messageInput.placeholder = "Czekaj na rozmówcę...";
-
-    // Symulujemy szukanie (2 sekundy)
-    setTimeout(() => {
-        messagesBox.innerHTML += `<p class="system-msg">Połączono z obcym rozmówcą! Przywitaj się.</p>`;
-        
-        // ODBLOKOWANIE wszystkiego po połączeniu
-        messageInput.disabled = false;
-        sendBtn.disabled = false;
-        leaveBtn.disabled = false; 
-        messageInput.placeholder = "Napisz wiadomość...";
-        messageInput.focus();
-
-        startInactivityTimer();
-    }, 2000);
 }
 
 // Kliknięcie głównego przycisku "Rozpocznij losowanie"
@@ -258,4 +245,17 @@ leaveBtn.addEventListener('click', () => {
         leaveBtn.disabled = false; // Odblokowujemy przycisk dla nowej rozmowy
         startNewChat();
     }, 3000);
+});
+// Serwer znalazł drugą osobę – odblokowujemy okno czatu!
+socket.on('partner-found', () => {
+    messagesBox.innerHTML += `<p class="system-msg">Połączono z obcym rozmówcą! Przywitaj się.</p>`;
+    
+    // ODBLOKOWANIE wszystkiego po faktycznym połączeniu
+    messageInput.disabled = false;
+    sendBtn.disabled = false;
+    leaveBtn.disabled = false;
+    messageInput.placeholder = "Napisz wiadomość...";
+    messageInput.focus();
+
+    startInactivityTimer();
 });
