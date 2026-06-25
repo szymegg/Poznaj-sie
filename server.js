@@ -90,7 +90,7 @@ function disconnectUser(socket) {
 }
 
 // Serwer wystartuje na porcie 3000
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Prawdziwy serwer działa! Wejdź na: http://localhost:${PORT}`);
 });
