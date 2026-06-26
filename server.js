@@ -12,6 +12,7 @@ app.use(express.static(__dirname));
 
 // Tablica przechowująca użytkowników, którzy aktualnie szukają pary
 let waitingQueue = [];
+const lastMessageTimes = {};
 
 io.on('connection', (socket) => {
     console.log(`Nowy użytkownik połączył się: ${socket.id}`);
@@ -40,13 +41,26 @@ io.on('connection', (socket) => {
     }
     });
 
-    // Przesyłanie wiadomości tekstowej
-    socket.on('send-message', (text) => {
-        if (socket.partner) {
-            // Wysyłamy wiadomość bezpośrednio do partnera
-            socket.partner.emit('receive-message', text);
-        }
-    });
+  socket.on('send-message', (text) => {
+    const now = Date.now();
+    
+    // Ochrona przed SPAMEM (Flooding) - max 1 wiadomość na 400ms
+    if (lastMessageTimes[socket.id] && (now - lastMessageTimes[socket.id] < 400)) {
+        return; 
+    }
+    
+    // Walidacja danych - czy to tekst, czy nie jest pusty i czy nie przekracza 500 znaków
+    if (!text || typeof text !== 'string' || text.trim().length === 0 || text.length > 500) {
+        return; 
+    }
+
+    // Jeśli wszystko jest w porządku, zapisujemy czas tej wiadomości
+    lastMessageTimes[socket.id] = now;
+
+    if (socket.partner) {
+        socket.partner.emit('receive-message', text.trim());
+    }
+});
 
     // Uruchomienie gierki u rozmówcy
     socket.on('start-game', () => {
@@ -57,6 +71,7 @@ io.on('connection', (socket) => {
     socket.on('game-move', (index) => {
         if (socket.partner) socket.partner.emit('opponent-moved', index);
     });
+    delete lastMessageTimes[socket.id];
 
     // Rozłączenie lub kliknięcie "Rozłącz"
     socket.on('disconnect-chat', () => {
