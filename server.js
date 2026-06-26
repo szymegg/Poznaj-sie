@@ -16,6 +16,8 @@ const lastMessageTimes = {};
 
 io.on('connection', (socket) => {
     console.log(`Nowy użytkownik połączył się: ${socket.id}`);
+    // Wysyłamy zaktualizowaną liczbę osób do WSZYSTKICH połączonych użytkowników
+    io.emit('update-online-count', io.sockets.sockets.size);
 
    socket.on('search-partner', () => {
     socket.partner = null;
@@ -78,10 +80,13 @@ io.on('connection', (socket) => {
         disconnectUser(socket);
     });
 
-    socket.on('disconnect', () => {
-        disconnectUser(socket);
-        console.log(`Użytkownik się rozłączył: ${socket.id}`);
-    });
+   socket.on('disconnect', () => {
+    delete lastMessageTimes[socket.id];
+    disconnectUser(socket);
+    console.log(`Użytkownik się rozłączył: ${socket.id}`);
+    
+    // Ktoś wyszedł, więc wysyłamy aktualną liczbę do reszty połączonych osób
+    io.emit('update-online-count', io.sockets.sockets.size);
 });
 
 function disconnectUser(socket) {
