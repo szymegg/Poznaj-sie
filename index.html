@@ -46,7 +46,6 @@
             <button type="button" class="start-btn" id="start-btn">Rozpocznij losowanie</button>
         </div>
     </div>
-
     <div class="chat-container id-hidden" id="chat-screen">
         <div class="chat-box">
             <div class="chat-main-area">
@@ -66,12 +65,13 @@
                     <div class="cell" data-index="8"></div>
                 </div>
             </div>
-           <div class="input-area">
-                <input type="text" id="message-input" placeholder="Napisz wiadomość...">
-                <button id="send-btn">Wyślij</button>
-                <button id="game-toggle-btn" class="game-btn">🎮 Gra</button>
-                <button id="leave-btn" class="leave-btn">❌ Rozłącz</button>
-            </div>
+          <div class="input-area">
+        <input type="text" id="message-input" placeholder="Napisz wiadomość..." disabled>
+        <button type="button" id="send-btn" disabled>Wyślij</button>
+        
+        <button type="button" class="game-btn" id="game-btn">🎮 Gra</button>
+        <button type="button" class="disconnect-btn" id="disconnect-btn">❌ Rozłącz</button>
+    </div>
         </div>
     </div>
 <div class="modal-overlay id-hidden" id="action-modal">
