@@ -12,57 +12,60 @@ app.use(express.static(__dirname));
 
 // Tablica przechowująca użytkowników, którzy aktualnie szukają pary
 let waitingQueue = [];
+
+// Obiekt na zapisywanie czasu ostatniej wiadomości (zabezpieczenie przed spamem)
 const lastMessageTimes = {};
 
 io.on('connection', (socket) => {
     console.log(`Nowy użytkownik połączył się: ${socket.id}`);
-    // Wysyłamy zaktualizowaną liczbę osób do WSZYSTKICH połączonych użytkowników
+    
+    // Rozsyłamy zaktualizowaną liczbę osób online do wszystkich
     io.emit('update-online-count', io.sockets.sockets.size);
 
-   socket.on('search-partner', () => {
-    socket.partner = null;
+    socket.on('search-partner', () => {
+        socket.partner = null;
 
-    // 1. Sprawdzamy, czy w kolejce już ktoś czeka
-    if (waitingQueue.length > 0) {
-        // Wyciągamy pierwszą osobę z kolejki
-        let partnerSocket = waitingQueue.shift();
+        // 1. Sprawdzamy, czy w kolejce już ktoś czeka
+        if (waitingQueue.length > 0) {
+            // Wyciągamy pierwszą osobę z kolejki
+            let partnerSocket = waitingQueue.shift();
 
-        // Parujemy ich ze sobą
-        socket.partner = partnerSocket;
-        partnerSocket.partner = socket;
+            // Parujemy ich ze sobą
+            socket.partner = partnerSocket;
+            partnerSocket.partner = socket;
 
-        // Informujemy oba programy, że znaleziono parę!
-        socket.emit('partner-found');
-        partnerSocket.emit('partner-found');
-        
-        console.log(`Połączono parę: ${socket.id} oraz ${partnerSocket.id}`);
-    } else {
-        // 2. Jeśli kolejka jest pusta, sami do niej wskakujemy i czekamy
-        waitingQueue.push(socket);
-        console.log(`Użytkownik ${socket.id} czeka w kolejce.`);
-    }
+            // Informujemy oba programy, że znaleziono parę!
+            socket.emit('partner-found');
+            partnerSocket.emit('partner-found');
+
+            console.log(`Połączono parę: ${socket.id} oraz ${partnerSocket.id}`);
+        } else {
+            // 2. Jeśli kolejka jest pusta, sami do niej wskakujemy i czekamy
+            waitingQueue.push(socket);
+            console.log(`Użytkownik ${socket.id} czeka w kolejce.`);
+        }
     });
 
-  socket.on('send-message', (text) => {
-    const now = Date.now();
-    
-    // Ochrona przed SPAMEM (Flooding) - max 1 wiadomość na 400ms
-    if (lastMessageTimes[socket.id] && (now - lastMessageTimes[socket.id] < 400)) {
-        return; 
-    }
-    
-    // Walidacja danych - czy to tekst, czy nie jest pusty i czy nie przekracza 500 znaków
-    if (!text || typeof text !== 'string' || text.trim().length === 0 || text.length > 500) {
-        return; 
-    }
+    // Przesyłanie wiadomości tekstowej z zabezpieczeniami
+    socket.on('send-message', (text) => {
+        const now = Date.now();
+        
+        // Ochrona przed SPAMEM - max 1 wiadomość na 400ms
+        if (lastMessageTimes[socket.id] && (now - lastMessageTimes[socket.id] < 400)) {
+            return; 
+        }
+        
+        // Walidacja danych - max 500 znaków, brak pustych wiadomości
+        if (!text || typeof text !== 'string' || text.trim().length === 0 || text.length > 500) {
+            return; 
+        }
 
-    // Jeśli wszystko jest w porządku, zapisujemy czas tej wiadomości
-    lastMessageTimes[socket.id] = now;
+        lastMessageTimes[socket.id] = now;
 
-    if (socket.partner) {
-        socket.partner.emit('receive-message', text.trim());
-    }
-});
+        if (socket.partner) {
+            socket.partner.emit('receive-message', text.trim());
+        }
+    });
 
     // Uruchomienie gierki u rozmówcy
     socket.on('start-game', () => {
@@ -73,22 +76,23 @@ io.on('connection', (socket) => {
     socket.on('game-move', (index) => {
         if (socket.partner) socket.partner.emit('opponent-moved', index);
     });
+
     // Rozłączenie lub kliknięcie "Rozłącz"
     socket.on('disconnect-chat', () => {
         disconnectUser(socket);
     });
 
-   socket.on('disconnect', () => {
-    delete lastMessageTimes[socket.id];
-    disconnectUser(socket);
-    console.log(`Użytkownik się rozłączył: ${socket.id}`);
-    
-    // Ktoś wyszedł, więc wysyłamy aktualną liczbę do reszty połączonych osób
-    io.emit('update-online-count', io.sockets.sockets.size);
+    socket.on('disconnect', () => {
+        disconnectUser(socket);
+        console.log(`Użytkownik się rozłączył: ${socket.id}`);
+        
+        // Ktoś wyszedł, aktualizujemy licznik u reszty połączonych
+        io.emit('update-online-count', io.sockets.sockets.size);
+    });
 });
 
 function disconnectUser(socket) {
-    // Tutaj jest jej właściwe miejsce:
+    // Czyszczenie pamięci spamu
     delete lastMessageTimes[socket.id];
 
     // Jeśli był w kolejce, usuwamy go
@@ -102,7 +106,7 @@ function disconnectUser(socket) {
     }
 }
 
-// Serwer wystartuje na porcie 3000
+// Serwer wystartuje na odpowiednim porcie
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Serwer działa na porcie ${PORT}`);
