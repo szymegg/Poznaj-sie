@@ -52,9 +52,24 @@ startBtn.addEventListener('click', () => {
 
 // Funkcja wysyłania wiadomości
 function sendMessage() {
-    // Jeśli pole jest zablokowane, nie pozwól wysłać (zabezpieczenie)
-    if(messageInput.disabled) return;
+    if (messageInput.disabled) return;
 
+    const rawText = messageInput.value.trim();
+    
+    // Blokada wysyłania pustych wiadomości lub dłuższych niż 500 znaków
+    if (rawText !== "" && rawText.length <= 500) {
+        const safeText = escapeHTML(rawText);
+        
+        messagesBox.innerHTML += `<p><strong>Ty:</strong> ${safeText}</p>`;
+        
+        // Do serwera ślemy czysty tekst, serwer też go zwaliduje
+        socket.emit('send-message', rawText);
+
+        messageInput.value = "";
+        messagesBox.scrollTop = messagesBox.scrollHeight; // Auto-scroll na dół
+        startInactivityTimer();
+    }
+}
     const text = messageInput.value.trim();
     if(text !== "") {
         messagesBox.innerHTML += `<p><strong>Ty:</strong> ${text}</p>`;
@@ -261,7 +276,23 @@ socket.on('partner-found', () => {
     startInactivityTimer();
 });
 socket.on('receive-message', (text) => {
-    messagesBox.innerHTML += `<p><strong>Obcy:</strong> ${text}</p>`;
-    // tutaj też możesz zresetować timer nieaktywności, jeśli chcesz
+    // Przepuszczamy tekst przez filtr bezpieczeństwa
+    const safeText = escapeHTML(text);
+    
+    messagesBox.innerHTML += `<p><strong>Obcy:</strong> ${safeText}</p>`;
+    messagesBox.scrollTop = messagesBox.scrollHeight; // Auto-scroll na dół wiadomości
     startInactivityTimer();
 });
+// Funkcja zamieniająca znaki specjalne na bezpieczne encje HTML (ochrona XSS)
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, (tag) => {
+        const chars = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        };
+        return chars[tag] || tag;
+    });
+}
