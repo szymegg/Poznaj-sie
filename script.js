@@ -18,6 +18,13 @@ let responseTimer = null;
 let myTurn = true;        
 let mySign = "X";         
 
+// Kombinacje wygrywające w kółko i krzyżyk
+const winningCombinations = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Poziomo
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Pionowo
+    [0, 4, 8], [2, 4, 6]             // Skosy
+];
+
 function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, (tag) => {
         const chars = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
@@ -50,6 +57,35 @@ function stopResponseTimer() {
     clearTimeout(responseTimer);
 }
 
+function checkGameStatus() {
+    let currentBoard = Array.from(cells).map(cell => cell.innerText);
+    
+    // Sprawdzanie wygranej
+    for (let combo of winningCombinations) {
+        const [a, b, c] = combo;
+        if (currentBoard[a] && currentBoard[a] === currentBoard[b] && currentBoard[a] === currentBoard[c]) {
+            if (currentBoard[a] === mySign) {
+                alert("Gratulacje! Wygrałeś grę! 🎉");
+            } else {
+                alert("Niestety, przegrałeś. Obcy okazał się lepszy! 🤖");
+            }
+            resetGameBoard();
+            return;
+        }
+    }
+
+    // Sprawdzanie remisu (brak wolnych kafelków)
+    if (currentBoard.every(cell => cell !== "")) {
+        alert("Remis! Świetna walka! 🤝");
+        resetGameBoard();
+    }
+}
+
+function resetGameBoard() {
+    cells.forEach(cell => cell.innerText = "");
+    myTurn = (mySign === "X"); // Gracz X zawsze zaczyna nową rundę
+}
+
 function resetUI() {
     stopInactivityTimer();
     stopResponseTimer();
@@ -62,8 +98,7 @@ function resetUI() {
     messageInput.disabled = true;
     if (sendBtn) sendBtn.disabled = true;
     
-    cells.forEach(cell => cell.innerText = "");
-    myTurn = true;
+    resetGameBoard();
 }
 
 function startNewChat() {
@@ -108,6 +143,7 @@ function sendMessage() {
     }
 }
 
+if (sendBtn) sendBtn.disabled = false;
 if (sendBtn) sendBtn.addEventListener('click', sendMessage);
 if (messageInput) {
     messageInput.addEventListener('keypress', (e) => {
@@ -122,6 +158,7 @@ cells.forEach(cell => {
             myTurn = false; 
             const index = cell.getAttribute('data-index');
             socket.emit('game-move', index);
+            setTimeout(checkGameStatus, 50); // Krótkie opóźnienie, by litera zdążyła się narysować
         }
     });
 });
@@ -162,6 +199,7 @@ socket.on('opponent-moved', (index) => {
     if (targetCell) {
         targetCell.innerText = (mySign === "X") ? "O" : "X"; 
         myTurn = true; 
+        setTimeout(checkGameStatus, 50);
     }
 });
 
