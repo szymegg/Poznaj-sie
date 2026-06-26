@@ -13,9 +13,11 @@ const onlineCountSpan = document.getElementById('online-count');
 // Elementy do gry w kółko i krzyżyk
 const gameBoard = document.getElementById('game-board');
 const cells = document.querySelectorAll('.cell');
+const gameBtn = document.getElementById('game-btn') || document.querySelector('.btn-game') || document.querySelector('button:has(.fa-gamepad)');
 
 let inactivityTimer = null;
-let responseTimer = null; // Licznik 15 sekund na odpowiedź (Deadchat)
+let responseTimer = null; // Deadchat (15 sekund)
+let myTurn = true;        // Zarządzanie turą w grze
 
 // Funkcja zamieniająca znaki specjalne na bezpieczne encje HTML (ochrona XSS)
 function escapeHTML(str) {
@@ -45,13 +47,13 @@ function stopInactivityTimer() {
     clearTimeout(inactivityTimer);
 }
 
-// Licznik braku odpowiedzi po 15 sekundach (Deadchat)
+// Licznik braku odpowiedzi po dokładnie 15 sekundach (Deadchat)
 function startResponseTimer() {
     clearTimeout(responseTimer);
     responseTimer = setTimeout(() => {
-        messagesBox.innerHTML += '<p class="system-msg" style="color: #dc3545; font-weight: bold;">Rozmówca nie odpowiada od 15 sekund... Może warto go rozruszać?</p>';
+        messagesBox.innerHTML += '<p class="system-msg" style="color: #dc3545; font-weight: bold; text-align: center;">Rozmówca nie odpowiada od 15 sekund... Może warto go rozruszać?</p>';
         messagesBox.scrollTop = messagesBox.scrollHeight;
-    }, 150000); // 15 sekund
+    }, 15000); // Dokładnie 15000ms = 15 sekund
 }
 
 function stopResponseTimer() {
@@ -64,6 +66,7 @@ function resetUI() {
     if (chatScreen) chatScreen.classList.add('id-hidden');
     if (welcomeScreen) welcomeScreen.classList.remove('id-hidden');
     if (gameBoard) gameBoard.classList.add('id-hidden');
+    
     messagesBox.innerHTML = '<p class="system-msg">Łączenie z rozmówcą...</p>';
     messageInput.value = "";
     messageInput.disabled = true;
@@ -71,6 +74,7 @@ function resetUI() {
     
     // Reset planszy gierki
     cells.forEach(cell => cell.innerText = "");
+    myTurn = true;
 }
 
 function startNewChat() {
@@ -80,11 +84,27 @@ function startNewChat() {
     socket.emit('search-partner');
 }
 
-// Obsługa przycisków
-if (startBtn) {
-    startBtn.addEventListener('click', startNewChat);
+// Obsługa przycisków startu i rozłączenia
+if (startBtn) startBtn.addEventListener('click', startNewChat);
+
+if (disconnectBtn) {
+    disconnectBtn.addEventListener('click', () => {
+        socket.emit('disconnect-chat');
+        resetUI();
+    });
 }
 
+// Ręczne włączanie/wyłączanie gierki przyciskiem "Gra"
+if (gameBtn) {
+    gameBtn.addEventListener('click', () => {
+        if (gameBoard) {
+            gameBoard.classList.toggle('id-hidden');
+            socket.emit('start-game'); // Informujemy serwer, żeby pokazał planszę też u obcego
+        }
+    });
+}
+
+// Funkcja wysyłania wiadomości tekstowej
 function sendMessage() {
     if (messageInput.disabled) return;
 
@@ -92,7 +112,6 @@ function sendMessage() {
     
     if (rawText !== "" && rawText.length <= 500) {
         const safeText = escapeHTML(rawText);
-        
         messagesBox.innerHTML += `<p><strong>Ty:</strong> ${safeText}</p>`;
         
         socket.emit('send-message', rawText);
@@ -105,9 +124,7 @@ function sendMessage() {
     }
 }
 
-if (sendBtn) {
-    sendBtn.addEventListener('click', sendMessage);
-}
+if (sendBtn) sendBtn.addEventListener('click', sendMessage);
 
 if (messageInput) {
     messageInput.addEventListener('keypress', (e) => {
@@ -115,20 +132,14 @@ if (messageInput) {
     });
 }
 
-if (disconnectBtn) {
-    disconnectBtn.addEventListener('click', () => {
-        socket.emit('disconnect-chat');
-        resetUI();
-    });
-}
-
-// Obsługa kliknięcia w kafelki gry (Kółko i Krzyżyk)
+// Logika gry w kółko i krzyżyk
 cells.forEach(cell => {
     cell.addEventListener('click', () => {
-        const index = cell.getAttribute('data-index');
-        // Jeśli pole jest puste, stawiamy znak i wysyłamy ruch do partnera
-        if (cell.innerText === "") {
-            cell.innerText = "X"; // Gracz rozpoczynający ma X
+        // Kliknąć można tylko w swojej turze i tylko w puste pole
+        if (myTurn && cell.innerText === "") {
+            cell.innerText = "X"; 
+            myTurn = false; // Oddajemy turę przeciwnikowi
+            const index = cell.getAttribute('data-index');
             socket.emit('game-move', index);
         }
     });
@@ -154,12 +165,10 @@ socket.on('partner-found', () => {
     sendBtn.disabled = false;
     
     startInactivityTimer();
-    
-    // Automatycznie pokazujemy też planszę do gry, jeśli chcesz, żeby była widoczna
-    if (gameBoard) gameBoard.classList.remove('id-hidden');
+    myTurn = true; // Osoba, która pierwsza kliknie na swoją planszę, stawia ruch
 });
 
-// Odbieranie wiadomości
+// Odbieranie wiadomości tekstowej
 socket.on('receive-message', (text) => {
     stopResponseTimer(); // Obcy odpisał, więc kasujemy licznik 15s
     
@@ -170,24 +179,35 @@ socket.on('receive-message', (text) => {
     startInactivityTimer();
 });
 
-// Partner się rozłączył
-socket.on('partner-disconnected', () => {
-    stopInactivityTimer();
-    stopResponseTimer();
-    messagesBox.innerHTML += '<p class="system-msg text-danger">Rozmówca się rozłączył.</p>';
-    messageInput.disabled = true;
-    sendBtn.disabled = true;
+// Partner wcisnął ikonę gry / wywołał start gry
+socket.on('game-started', () => {
+    if (gameBoard) gameBoard.classList.remove('id-hidden');
 });
 
 // Serwer informuje o ruchu przeciwnika w grze
 socket.on('opponent-moved', (index) => {
     const targetCell = document.querySelector(`.cell[data-index="${index}"]`);
     if (targetCell) {
-        targetCell.innerText = "O"; // Przeciwnik stawia O
+        targetCell.innerText = "O"; // Ruch obcego to zawsze O
+        myTurn = true;              // Z powrotem nasza tura!
     }
 });
 
-// Gra wystartowała z poziomu serwera
-socket.on('game-started', () => {
-    if (gameBoard) gameBoard.classList.remove('id-hidden');
+// Partner się rozłączył - POKAZANIE KOMUNIKATU I ZAPYTANIA
+socket.on('partner-disconnected', () => {
+    stopInactivityTimer();
+    stopResponseTimer();
+    
+    messagesBox.innerHTML += '<p class="system-msg text-danger">Rozmówca się rozłączył.</p>';
+    messageInput.disabled = true;
+    sendBtn.disabled = true;
+
+    // Automatyczne zapytanie o nowe losowanie
+    setTimeout(() => {
+        if (confirm("Twój rozmówca opuścił rozmowę. Czy chcesz znaleźć nową osobę?")) {
+            startNewChat();
+        } else {
+            resetUI();
+        }
+    }, 500);
 });
