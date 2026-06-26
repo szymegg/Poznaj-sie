@@ -18,11 +18,10 @@ let responseTimer = null;
 let myTurn = true;        
 let mySign = "X";         
 
-// Kombinacje wygrywające w kółko i krzyżyk
 const winningCombinations = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Poziomo
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Pionowo
-    [0, 4, 8], [2, 4, 6]             // Skosy
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], 
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], 
+    [0, 4, 8], [2, 4, 6]             
 ];
 
 function escapeHTML(str) {
@@ -60,7 +59,6 @@ function stopResponseTimer() {
 function checkGameStatus() {
     let currentBoard = Array.from(cells).map(cell => cell.innerText);
     
-    // Sprawdzanie wygranej
     for (let combo of winningCombinations) {
         const [a, b, c] = combo;
         if (currentBoard[a] && currentBoard[a] === currentBoard[b] && currentBoard[a] === currentBoard[c]) {
@@ -74,7 +72,6 @@ function checkGameStatus() {
         }
     }
 
-    // Sprawdzanie remisu (brak wolnych kafelków)
     if (currentBoard.every(cell => cell !== "")) {
         alert("Remis! Świetna walka! 🤝");
         resetGameBoard();
@@ -83,7 +80,7 @@ function checkGameStatus() {
 
 function resetGameBoard() {
     cells.forEach(cell => cell.innerText = "");
-    myTurn = (mySign === "X"); // Gracz X zawsze zaczyna nową rundę
+    myTurn = (mySign === "X"); 
 }
 
 function resetUI() {
@@ -105,7 +102,16 @@ function startNewChat() {
     resetUI();
     if (welcomeScreen) welcomeScreen.classList.add('id-hidden');
     if (chatScreen) chatScreen.classList.remove('id-hidden');
-    socket.emit('search-partner');
+
+    // Pobieranie wybranych opcji płci z formularza HTML
+    const myGenderActive = document.querySelector('input[name="my-gender"]:checked')?.value || 'male';
+    const searchGenderActive = document.querySelector('input[name="search-gender"]:checked')?.value || 'anyone';
+
+    // Wysyłamy obiekt z preferencjami do serwera
+    socket.emit('search-partner', {
+        myGender: myGenderActive,
+        searchGender: searchGenderActive
+    });
 }
 
 if (startBtn) startBtn.addEventListener('click', startNewChat);
@@ -143,7 +149,6 @@ function sendMessage() {
     }
 }
 
-if (sendBtn) sendBtn.disabled = false;
 if (sendBtn) sendBtn.addEventListener('click', sendMessage);
 if (messageInput) {
     messageInput.addEventListener('keypress', (e) => {
@@ -158,7 +163,7 @@ cells.forEach(cell => {
             myTurn = false; 
             const index = cell.getAttribute('data-index');
             socket.emit('game-move', index);
-            setTimeout(checkGameStatus, 50); // Krótkie opóźnienie, by litera zdążyła się narysować
+            setTimeout(checkGameStatus, 50); 
         }
     });
 });
