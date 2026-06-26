@@ -9,6 +9,7 @@ const io = new Server(server);
 
 app.use(express.static(__dirname));
 
+// Kolejka przechowuje teraz obiekty z danymi o płci
 let waitingQueue = [];
 const lastMessageTimes = {};
 
@@ -16,18 +17,42 @@ io.on('connection', (socket) => {
     console.log(`Nowy użytkownik połączył się: ${socket.id}`);
     io.emit('update-online-count', io.sockets.sockets.size);
 
-    socket.on('search-partner', () => {
+    socket.on('search-partner', (data) => {
         socket.partner = null;
-        if (waitingQueue.length > 0) {
-            let partnerSocket = waitingQueue.shift();
+        
+        // Wyciągamy dane przesłane z frontu (domyślnie 'anyone' jeśli brak)
+        const myGender = data?.myGender || 'male';
+        const searchGender = data?.searchGender || 'anyone';
+
+        // Szukamy w kolejce kogoś, kto pasuje do nas I do kogo my pasujemy
+        let partnerIndex = waitingQueue.findIndex(user => {
+            // Czy ta osoba pasuje do naszych kryteriów?
+            const matchForMe = (searchGender === 'anyone' || searchGender === user.myGender);
+            // Czy my pasujemy do jej kryteriów?
+            const matchForPartner = (user.searchGender === 'anyone' || user.searchGender === myGender);
+            
+            return matchForMe && matchForPartner;
+        });
+
+        if (partnerIndex !== -1) {
+            // Znaleziono dopasowanie! Wyciągamy partnera z kolejki
+            let partnerData = waitingQueue.splice(partnerIndex, 1)[0];
+            let partnerSocket = partnerData.socket;
+
             socket.partner = partnerSocket;
             partnerSocket.partner = socket;
+
             socket.emit('partner-found');
             partnerSocket.emit('partner-found');
-            console.log(`Połączono parę: ${socket.id} oraz ${partnerSocket.id}`);
+            console.log(`Połączono parę z dopasowaniem płci: ${socket.id} oraz ${partnerSocket.id}`);
         } else {
-            waitingQueue.push(socket);
-            console.log(`Użytkownik ${socket.id} czeka w kolejce.`);
+            // Brak dopasowania – dodajemy siebie do kolejki oczekujących wraz z preferencjami
+            waitingQueue.push({
+                socket: socket,
+                myGender: myGender,
+                searchGender: searchGender
+            });
+            console.log(`Użytkownik ${socket.id} (${myGender} szuka ${searchGender}) czeka w kolejce.`);
         }
     });
 
@@ -63,7 +88,8 @@ io.on('connection', (socket) => {
 
 function disconnectUser(socket) {
     delete lastMessageTimes[socket.id];
-    waitingQueue = waitingQueue.filter(user => user.id !== socket.id);
+    // Czyszczenie kolejki uwzględniając strukturę obiektów
+    waitingQueue = waitingQueue.filter(item => item.socket.id !== socket.id);
     if (socket.partner) {
         socket.partner.emit('partner-disconnected');
         socket.partner.partner = null;
