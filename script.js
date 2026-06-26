@@ -1,6 +1,5 @@
 const socket = io();
 
-// Pobieranie elementów DOM - DOPASOWANE DO TWOJEGO HTML
 const welcomeScreen = document.getElementById('welcome-screen');
 const chatScreen = document.getElementById('chat-screen');
 const startBtn = document.getElementById('start-btn');
@@ -9,18 +8,15 @@ const sendBtn = document.getElementById('send-btn');
 const messagesBox = document.getElementById('messages-box');
 const onlineCountSpan = document.getElementById('online-count');
 
-// Przyciski dopasowane do Twoich ID z linii 72 i 73
 const gameBtn = document.getElementById('game-toggle-btn');
 const disconnectBtn = document.getElementById('leave-btn');
-
-// Elementy do gry w kółko i krzyżyk
 const gameBoard = document.getElementById('game-board');
 const cells = document.querySelectorAll('.cell');
 
 let inactivityTimer = null;
-let responseTimer = null; // Deadchat (15 sekund)
-let myTurn = true;        // Zarządzanie turą w grze
-let mySign = "X";         // Twój znak na planszy
+let responseTimer = null; 
+let myTurn = true;        
+let mySign = "X";         
 
 function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, (tag) => {
@@ -29,7 +25,6 @@ function escapeHTML(str) {
     });
 }
 
-// Licznik nieaktywności (3 minuty)
 function startInactivityTimer() {
     clearTimeout(inactivityTimer);
     inactivityTimer = setTimeout(() => {
@@ -43,7 +38,6 @@ function stopInactivityTimer() {
     clearTimeout(inactivityTimer);
 }
 
-// Licznik braku odpowiedzi (Dokładnie 15 sekund)
 function startResponseTimer() {
     clearTimeout(responseTimer);
     responseTimer = setTimeout(() => {
@@ -68,7 +62,6 @@ function resetUI() {
     messageInput.disabled = true;
     if (sendBtn) sendBtn.disabled = true;
     
-    // Czyszczenie gierki
     cells.forEach(cell => cell.innerText = "");
     myTurn = true;
 }
@@ -122,7 +115,6 @@ if (messageInput) {
     });
 }
 
-// Obsługa logiki klikania w kafelki gry
 cells.forEach(cell => {
     cell.addEventListener('click', () => {
         if (myTurn && cell.innerText === "") {
@@ -133,8 +125,6 @@ cells.forEach(cell => {
         }
     });
 });
-
-// === SŁUCHANIE EVENTÓW Z SERWERA ===
 
 socket.on('update-online-count', (count) => {
     if (onlineCountSpan) onlineCountSpan.innerText = count;
@@ -150,7 +140,7 @@ socket.on('partner-found', () => {
     
     startInactivityTimer();
     myTurn = true; 
-    mySign = "X"; // Osoba inicjująca ruch stawia X
+    mySign = "X"; 
 });
 
 socket.on('receive-message', (text) => {
@@ -163,7 +153,7 @@ socket.on('receive-message', (text) => {
 
 socket.on('game-started', () => {
     if (gameBoard) gameBoard.classList.remove('id-hidden');
-    mySign = "O"; // Jeśli to obcy odpalił grę, Ty grasz jako O
+    mySign = "O"; 
     myTurn = false;
 });
 
@@ -175,7 +165,6 @@ socket.on('opponent-moved', (index) => {
     }
 });
 
-// Komunikat o wyjściu i zapytanie o ponowne losowanie
 socket.on('partner-disconnected', () => {
     stopInactivityTimer();
     stopResponseTimer();
