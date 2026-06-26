@@ -73,8 +73,6 @@ io.on('connection', (socket) => {
     socket.on('game-move', (index) => {
         if (socket.partner) socket.partner.emit('opponent-moved', index);
     });
-    delete lastMessageTimes[socket.id];
-
     // Rozłączenie lub kliknięcie "Rozłącz"
     socket.on('disconnect-chat', () => {
         disconnectUser(socket);
@@ -90,6 +88,9 @@ io.on('connection', (socket) => {
 });
 
 function disconnectUser(socket) {
+    // Tutaj jest jej właściwe miejsce:
+    delete lastMessageTimes[socket.id];
+
     // Jeśli był w kolejce, usuwamy go
     waitingQueue = waitingQueue.filter(user => user.id !== socket.id);
 
