@@ -1,4 +1,5 @@
 // Łapiemy elementy z HTML
+const onlineCountSpan = document.getElementById('online-count');
 const socket = io('https://poznaj-sie.onrender.com');
 const startBtn = document.getElementById('start-btn');
 const welcomeScreen = document.getElementById('welcome-screen');
@@ -296,3 +297,9 @@ function escapeHTML(str) {
         return chars[tag] || tag;
     });
 }
+// Aktualizacja licznika osób online na stronie startowej
+socket.on('update-online-count', (count) => {
+    if (onlineCountSpan) {
+        onlineCountSpan.innerText = count;
+    }
+});
